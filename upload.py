@@ -31,7 +31,7 @@ def upload_to_supabase(json_file_path: str):
         print("Error: Invalid JSON format.")
         return
 
-    # Prepare data for insertion (map 'image_url' to 'image' based on schema)
+    # Prepare data for insertion
     formatted_data = []
     for item in ads_data:
         formatted_data.append(
@@ -39,9 +39,7 @@ def upload_to_supabase(json_file_path: str):
                 "title": item.get("title"),
                 "price": item.get("price"),
                 "url": item.get("url"),
-                "image": item.get(
-                    "image_url"
-                ),  # Schema uses 'image' instead of 'image_url'
+                "image": item.get("image"),
             }
         )
 
@@ -59,5 +57,4 @@ def upload_to_supabase(json_file_path: str):
 
 
 if __name__ == "__main__":
-    # Specify the name of your JSON file here
     upload_to_supabase("output.json")
