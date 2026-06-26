@@ -1,5 +1,6 @@
 """
 Scrapes product listings from multiple Subito.it search-results pages.
+Outputs a single JSON file containing all extracted products.
 
 Data sources
 ------------
@@ -76,8 +77,6 @@ HEADERS = {
 
 
 #  Helpers
-
-
 def fetch_page(url: str) -> str:
     """Download the page and return its HTML text."""
     session = requests.Session()
@@ -190,33 +189,14 @@ def build_products(image_items: list, prices: list, urls: list) -> list:
     return products
 
 
-def print_products(products: list, search_term: str) -> None:
-    """Pretty-print the scraped product list for a given search term."""
-    if not products:
-        print(f"\nNo products found for '{search_term}'.")
-        return
-
-    sep = "" * 72
-    print(f"\n{'═' * 72}")
-    print(f"  Subito.it – search: '{search_term}'  |  {len(products)} product(s) found")
-    print(f"{'═' * 72}\n")
-
-    for i, p in enumerate(products, start=1):
-        print(f"[{i}] {p['title'] or '(no title)'}")
-        print(f"    Price     : {p['price'] or '—'}")
-        print(f"    URL       : {p['url'] or '—'}")
-        print(f"    Image URL : {p['image_url'] or '—'}")
-        print(sep)
-
-
 #  Main
-
-
 def main() -> None:
-    """Loop over all search terms and scrape each one."""
+    """Loop over all search terms, scrape each one, and write a JSON file."""
+    all_products = []
+
     for term in SEARCH_TERMS:
         url = f"{BASE_URL}{term}"
-        print(f"\nFetching: {url}")
+        print(f"Fetching: {url}")
 
         try:
             html = fetch_page(url)
@@ -231,16 +211,20 @@ def main() -> None:
 
         # 1. Titles + image URLs  ← application/ld+json
         image_items = parse_ld_json(soup)
-        print(f"  ImageObject entries found (ld+json)  : {len(image_items)}")
 
         # 2. Prices + product URLs  ← __NEXT_DATA__
         prices, urls = parse_next_data(soup)
-        print(f"  Price entries found  (__NEXT_DATA__) : {len(prices)}")
-        print(f"  URL   entries found  (__NEXT_DATA__) : {len(urls)}")
 
-        # 3. Assemble & display
+        # 3. Assemble & extend the master list
         products = build_products(image_items, prices, urls)
-        print_products(products, term)
+        all_products.extend(products)
+
+    # Write all products to a JSON file
+    output_file = "output.json"
+    with open(output_file, "w", encoding="utf-8") as f:
+        json.dump(all_products, f, ensure_ascii=False, indent=2)
+
+    print(f"\nSaved {len(all_products)} product(s) to {output_file}")
 
 
 if __name__ == "__main__":
