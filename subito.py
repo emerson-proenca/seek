@@ -1,10 +1,5 @@
 """
-subito_scraper.py
------------------
-Scrapes product listings from a Subito.it search-results page.
-
-Target URL : https://www.subito.it/annunci-italia/vendita/motori/?q=pioneer+rds
-Search term: "pioneer+rds"  (fixed, not modified)
+Scrapes product listings from multiple Subito.it search-results pages.
 
 Data sources
 ------------
@@ -15,10 +10,10 @@ Data sources
 2. <script id="__NEXT_DATA__" type="application/json">
    A large Next.js state object.
    Extracts for each product (in order):
-     - price  : found under key "/price" → "values" → [0] → "value"
-     - url    : found under key "urls"   → "default"
+     - price  : found under key "/price" -> "values" -> [0] -> "value"
+     - url    : found under key "urls"   -> "default"
 
-Dependencies: requests, beautifulsoup4  (both installable via pip)
+Dependencies: requests, beautifulsoup4
 """
 
 import json
@@ -29,7 +24,35 @@ from bs4 import BeautifulSoup
 
 #  Configuration
 
-URL = "https://www.subito.it/annunci-italia/vendita/usato/?q=KEH-P7600R"
+BASE_URL = "https://www.subito.it/annunci-italia/vendita/usato/?q="
+SEARCH_TERMS = [
+    "KEH-P7600R",
+    "DEQ-9200",
+    "DEQ-7600",
+    "Pioneer KEH-P8200RDS-W",
+    "Pioneer DEQ-9200",
+    "Pioneer DEQ-7600",
+    "KEH-P8650W",
+    "KEH-P8650-W",
+    "KEH-P8900R-W",
+    "KEH-P8600RW",
+    "KEH-P8400R-W",
+    "KEH-P8600R-W",
+    "KEH-P8200RDS-W",
+    "KEH-P7100RDS-W",
+    "KEH-P6800R-W",
+    "DEQ-44",
+    "DEX-P88R",
+    "KDS-P505",
+    "RD-L110",
+    "DEH-P1Y",
+    "DEH-P8MP",
+    "DEH-P725R-W",
+    "725R-W",
+    "CDS-P300",
+    "Pioneer TS-2150",
+    "Pioneer TS-1750",
+]
 
 HEADERS = {
     "User-Agent": (
@@ -150,7 +173,7 @@ def parse_next_data(soup: BeautifulSoup):
 def build_products(image_items: list, prices: list, urls: list) -> list:
     """
     Zip the three parallel lists into a single list of product dicts.
-    The length is determined by the longest list; missing slots → None.
+    The length is determined by the longest list; missing slots -> None.
     """
     n = max(len(image_items), len(prices), len(urls), 0)
     products = []
@@ -167,15 +190,15 @@ def build_products(image_items: list, prices: list, urls: list) -> list:
     return products
 
 
-def print_products(products: list) -> None:
-    """Pretty-print the scraped product list."""
+def print_products(products: list, search_term: str) -> None:
+    """Pretty-print the scraped product list for a given search term."""
     if not products:
-        print("No products found.")
+        print(f"\nNo products found for '{search_term}'.")
         return
 
     sep = "" * 72
     print(f"\n{'═' * 72}")
-    print(f"  Subito.it – pioneer+rds  |  {len(products)} product(s) found")
+    print(f"  Subito.it – search: '{search_term}'  |  {len(products)} product(s) found")
     print(f"{'═' * 72}\n")
 
     for i, p in enumerate(products, start=1):
@@ -190,28 +213,34 @@ def print_products(products: list) -> None:
 
 
 def main() -> None:
-    print(f"Fetching: {URL}")
-    try:
-        html = fetch_page(URL)
-    except requests.HTTPError as exc:
-        sys.exit(f"HTTP error: {exc}")
-    except requests.RequestException as exc:
-        sys.exit(f"Network error: {exc}")
+    """Loop over all search terms and scrape each one."""
+    for term in SEARCH_TERMS:
+        url = f"{BASE_URL}{term}"
+        print(f"\nFetching: {url}")
 
-    soup = BeautifulSoup(html, "html.parser")
+        try:
+            html = fetch_page(url)
+        except requests.HTTPError as exc:
+            print(f"HTTP error for '{term}': {exc}", file=sys.stderr)
+            continue
+        except requests.RequestException as exc:
+            print(f"Network error for '{term}': {exc}", file=sys.stderr)
+            continue
 
-    # 1. Titles + image URLs  ← application/ld+json
-    image_items = parse_ld_json(soup)
-    print(f"  ImageObject entries found (ld+json)  : {len(image_items)}")
+        soup = BeautifulSoup(html, "html.parser")
 
-    # 2. Prices + product URLs  ← __NEXT_DATA__
-    prices, urls = parse_next_data(soup)
-    print(f"  Price entries found  (__NEXT_DATA__) : {len(prices)}")
-    print(f"  URL   entries found  (__NEXT_DATA__) : {len(urls)}")
+        # 1. Titles + image URLs  ← application/ld+json
+        image_items = parse_ld_json(soup)
+        print(f"  ImageObject entries found (ld+json)  : {len(image_items)}")
 
-    # 3. Assemble & display
-    products = build_products(image_items, prices, urls)
-    print_products(products)
+        # 2. Prices + product URLs  ← __NEXT_DATA__
+        prices, urls = parse_next_data(soup)
+        print(f"  Price entries found  (__NEXT_DATA__) : {len(prices)}")
+        print(f"  URL   entries found  (__NEXT_DATA__) : {len(urls)}")
+
+        # 3. Assemble & display
+        products = build_products(image_items, prices, urls)
+        print_products(products, term)
 
 
 if __name__ == "__main__":
