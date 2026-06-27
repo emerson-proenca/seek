@@ -1,20 +1,6 @@
 """
 Scrapes product listings from multiple Subito.it search-results pages.
 Outputs a single JSON file containing all extracted products.
-
-Data sources
-------------
-1. <script type="application/ld+json">
-   A JSON-LD graph (key "@graph") containing ImageObject entries.
-   Extracts: title ("name"), image URL ("contentUrl").
-
-2. <script id="__NEXT_DATA__" type="application/json">
-   A large Next.js state object.
-   Extracts for each product (in order):
-     - price  : found under key "/price" -> "values" -> [0] -> "value"
-     - url    : found under key "urls"   -> "default"
-
-Dependencies: requests, beautifulsoup4
 """
 
 import json

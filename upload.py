@@ -1,20 +1,12 @@
+"""
+Loads Supabase Secrets
+Finds 'output.json'
+Uploads 'output.json' to Supabase
+"""
+
 import json
-import os
 
-from dotenv import load_dotenv
-from supabase import Client, create_client
-
-# Load environment variables from the .env file
-load_dotenv()
-
-SUPABASE_URL = os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
-
-if not SUPABASE_URL or not SUPABASE_KEY:
-    raise ValueError("Missing Supabase credentials. Check your .env file.")
-
-# Initialize the Supabase client
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+from load_env import supabase
 
 
 def upload_to_supabase(json_file_path: str):

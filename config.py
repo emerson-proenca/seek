@@ -1,4 +1,6 @@
-# config.py
+"""
+Constants that will not change
+"""
 
 BASE_URL: str = "https://www.subito.it/annunci-italia/vendita/usato/?q="
 
