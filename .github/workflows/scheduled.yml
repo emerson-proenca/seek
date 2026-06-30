@@ -41,7 +41,7 @@ jobs:
           MY_API_KEY: ${{ secrets.MY_API_KEY }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
-          subito.py
+          python subito.py
 
       - name: Commit and push changes
         run: |
