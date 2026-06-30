@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 from supabase import Client, create_client
 
-REQUIRED_VARS = [
+REQUIRED_VARS: list[str] = [
     "SUPABASE_URL",
     "SUPABASE_KEY",
     "TELEGRAM_BOT_TOKEN",
@@ -18,7 +18,7 @@ try:
 except Exception as e:
     raise RuntimeError(f"Error loading .env: {e}")
 
-missing = [var for var in REQUIRED_VARS if not os.environ.get(var)]
+missing: list[str] = [var for var in REQUIRED_VARS if not os.environ.get(var)]
 if missing:
     raise ValueError("Missing environment variables: " + ", ".join(missing))
 
